@@ -8,7 +8,7 @@ import {
 
 import Users from "./user/pages/Users";
 import NewPlace from "./places/pages/NewPlace";
-import MainNavigation from "./shared/components/UIElement/Navigation/MainNavigation";
+import MainNavigation from "./shared/components/Navigation/MainNavigation";
 
 function App() {
   return (
