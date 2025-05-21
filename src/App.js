@@ -11,6 +11,7 @@ function App() {
         <Route path="/" element={<Users />}/>
         <Route path="/places/new" element={<NewPlace />}/>
         {/* this is a fallback path, any route that does not match any exact paths fall into this */}
+        <Route path="/dummy/*" element={<h1>This is a dummy paht</h1>}/>
         <Route path="*" element={<Navigate to="/"/>} />
         </Routes>
     </Router>
