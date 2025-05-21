@@ -3,7 +3,7 @@ import UserList from "../components/UserList";
 
 const USERS = [
   {
-    id: Math.random().toString(),
+    id: 'u1',
     name: "Name 1",
     places: 2,
     image: "https://hips.hearstapps.com/hmg-prod/images/dahlia-1508785047.jpg?crop=1.00xw:0.669xh;0,0.0136xh&resize=980:*",
