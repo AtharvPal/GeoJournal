@@ -1,11 +1,7 @@
 const express = require("express");
-const bodyParser = require("body-parser");
+const { check } = require("express-validator");
 
-const {
-  getUsers,
-  signUp,
-  login,
-} = require("../controllers/users-controller");
+const { getUsers, signUp, login } = require("../controllers/users-controller");
 
 const router = express.Router();
 
@@ -13,8 +9,14 @@ const router = express.Router();
 
 router.get("/", getUsers);
 
-router.post("/signup", signUp);
+router.post(
+  "/signup",
+  check("name").not().isEmpty(),
+  check("email").normalizeEmail().isEmail(),
+  check("password").isLength({ min: 6 }),
+  signUp
+);
 
-router.post('/login', login);
+router.post("/login", login);
 
 module.exports = router;

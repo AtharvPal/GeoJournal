@@ -1,4 +1,5 @@
 const HttpError = require("../models/http-error");
+const { validationResult } = require("express-validator"); // this is used to validate the request body
 const { v4: uuidv4 } = require("uuid"); // this is a random id generator
 
 let DUMMY_USERS = [
@@ -30,6 +31,12 @@ const login = (req, res, next) => {
 };
 
 const signUp = (req, res, next) => {
+  const errors = validationResult(req); // this will check if the request body is valid
+  if (!errors.isEmpty()) {
+    return next(
+      new HttpError("Invalid isign in passed, please check your data.", 422)
+    ); // this will skip all the other middleware and go to the error handling middleware
+  }
   const { name, email, password } = req.body;
   const createdUser = {
     id: uuidv4(),

@@ -1,5 +1,8 @@
 const HttpError = require("../models/http-error");
+const { validationResult } = require("express-validator"); // this is used to validate the request body
 const { v4: uuidv4 } = require("uuid"); // this is a random id generator
+
+const getCoordsForAddress = require("../util/location"); // this is used to get the coordinates of the address
 
 let DUMMY_PLACES = [
   {
@@ -48,7 +51,7 @@ const getPlacesByUserId = (req, res, next) => {
   const userId = req.params.uid;
   const places = DUMMY_PLACES.filter((p) => {
     return p.creator === userId;
-  });
+  }); 
   console.log("GET user");
   if (!places || places.length === 0) {
     return next(
@@ -58,8 +61,20 @@ const getPlacesByUserId = (req, res, next) => {
   res.json({ places }); // { place} => { place: place }
 };
 
-const createPlace = (req, res, next) => {
-  const { title, description, coordinates, address, creator } = req.body; // this is possible because of the body-parser middleware
+const createPlace = async (req, res, next) => {
+  const errors = validationResult(req); // this will check if the request body is valid
+  if (!errors.isEmpty()) {
+    return next(
+      new HttpError("Invalid inputs passed, please check your data.", 422)
+    ); // this will skip all the other middleware and go to the error handling middleware
+  }
+  const { title, description, address, creator } = req.body; // this is possible because of the body-parser middleware
+  let coordinates;
+  try {
+    coordinates = await getCoordsForAddress(address); // this will return the coordinates of the address
+  } catch (error) {
+    return next(error)
+  }
   const createdPlace = {
     id: uuidv4(),
     creator,
@@ -74,6 +89,13 @@ const createPlace = (req, res, next) => {
 };
 
 const updatePlace = (req, res, next) => {
+  const errors = validationResult(req); // this will check if the request body is valid
+  if (!errors.isEmpty()) {
+    return next(
+      new HttpError("Invalid inputs passed, please check your data.", 422)
+    ); // this will skip all the other middleware and go to the error handling middleware
+  }
+  
   const { title, description } = req.body;
   const placeId = req.params.pid;
 

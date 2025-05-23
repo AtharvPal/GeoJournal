@@ -1,5 +1,5 @@
 const express = require("express");
-const bodyParser = require("body-parser");
+const { check } = require("express-validator");
 
 const {
   getPlaceById,
@@ -17,9 +17,9 @@ router.get("/:pid", getPlaceById);
 
 router.get("/user/:uid", getPlacesByUserId);
 
-router.post("/", createPlace);
+router.post("/", check('title').not().isEmpty(), check('description').isLength({min: 5}), createPlace);  // chaining of middleware, from left to right
 
-router.patch('/:pid', updatePlace);
+router.patch('/:pid', check('title').not().isEmpty(), check('description').isLength({min: 5}), updatePlace);
 
 router.delete('/:pid', deletePlace);
 
