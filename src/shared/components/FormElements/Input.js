@@ -23,8 +23,8 @@ const inputReducer = (state, action) => {
 
 const Input = (props) => {
   const [inputState, dispatch] = useReducer(inputReducer, {
-    value: "",
-    isValid: false,
+    value: props.initialValue || "",
+    isValid: props.initialValid || false,
   });
 
   const changeHandler = (event) => {
@@ -39,9 +39,9 @@ const Input = (props) => {
     dispatch({
       type: "TOUCH",
     });
-  }
+  };
 
-  const {id, onInput} = props;
+  const { id, onInput } = props;
   const { value, isValid } = inputState;
 
   useEffect(() => {
@@ -59,11 +59,21 @@ const Input = (props) => {
         value={inputState.value}
       />
     ) : (
-      <textarea id={props.id} rows={props.rows || 3} value={inputState.value} onChange={changeHandler} onBlur={touchHandler} />
+      <textarea
+        id={props.id}
+        rows={props.rows || 3}
+        value={inputState.value}
+        onChange={changeHandler}
+        onBlur={touchHandler}
+      />
     );
 
   return (
-    <div className={`form-control ${!inputState.isValid && inputState.isTouched && 'form-control--invalid'}`}>
+    <div
+      className={`form-control ${
+        !inputState.isValid && inputState.isTouched && "form-control--invalid"
+      }`}
+    >
       <label htmlFor={props.id}>{props.label}</label>
       {element}
       {!inputState.isValid && inputState.isTouched && <p>{props.errorText}</p>}
