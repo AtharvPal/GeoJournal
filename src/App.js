@@ -11,6 +11,7 @@ import NewPlace from "./places/pages/NewPlace";
 import MainNavigation from "./shared/components/Navigation/MainNavigation";
 import UserPlaces from "./places/pages/UserPlaces";
 import UpdatePlace from "./places/pages/UpdatePlace";
+import Auth from "./user/pages/Auth";
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
           <Route path="/:userId/places" element={<UserPlaces />} />
           <Route path="/places/new" element={<NewPlace />} />
           <Route path="/places/:placeId" element={<UpdatePlace />} />
+          <Route path="/auth" element={<Auth />} />
           {/* this is a fallback path, any route that does not match any exact paths fall into this */}
           <Route path="/dummy/*" element={<h1>This is a dummy paht</h1>} />
           <Route path="*" element={<Navigate to="/" />} />
