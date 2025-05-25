@@ -8,7 +8,7 @@ import PlaceList from "../components/PlaceList";
 
 const UserPlaces = () => {
   const { isLoading, error, sendRequest, clearError } = useHttpClient();
-  const [loadedPlaces, setLoadedPlaces] = React.useState([]);
+  const [loadedPlaces, setLoadedPlaces] = React.useState();
   const id = useParams().userId;
 
   useEffect(() => {

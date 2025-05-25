@@ -18,7 +18,7 @@ import Card from "../../shared/components/UIElement/Card";
 const UpdatePlace = () => {
   const auth = useContext(AuthContext);
   const { isLoading, error, sendRequest, clearError } = useHttpClient();
-  const [loadedPlace, setLoadedPlace] = useState([]);
+  const [loadedPlace, setLoadedPlace] = useState();
   const placeId = useParams().placeId;
 
   const [formState, inputHandler, setFormData] = useForm(
@@ -43,6 +43,7 @@ const UpdatePlace = () => {
         const responseData = await sendRequest(
           `http://localhost:5000/api/places/${placeId}`
         );
+        console.log("fetching places: ");
         console.log(responseData);
         setLoadedPlace(responseData.place);
         setFormData(
@@ -69,17 +70,17 @@ const UpdatePlace = () => {
     event.preventDefault();
     try {
       await sendRequest(
-      `http://localhost:5000/api/places/${placeId}`,
-      "PATCH",
-      JSON.stringify({
-        title: formState.inputs.title.value,
-        description: formState.inputs.description.value,
-      }),
-      {
-        "Content-Type": "application/json",
-      }
-    )}
-    catch (err) {
+        `http://localhost:5000/api/places/${placeId}`,
+        "PATCH",
+        JSON.stringify({
+          title: formState.inputs.title.value,
+          description: formState.inputs.description.value,
+        }),
+        {
+          "Content-Type": "application/json",
+        }
+      );
+    } catch (err) {
       navigate("/" + auth.userId + "/places");
     }
   };
