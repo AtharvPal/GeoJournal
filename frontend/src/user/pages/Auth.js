@@ -1,17 +1,17 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext } from "react";
 
-import Card from '../../shared/components/UIElement/Card';
-import Input from '../../shared/components/FormElements/Input';
-import Button from '../../shared/components/FormElements/Button';
+import Card from "../../shared/components/UIElement/Card";
+import Input from "../../shared/components/FormElements/Input";
+import Button from "../../shared/components/FormElements/Button";
 import {
   VALIDATOR_EMAIL,
   VALIDATOR_MINLENGTH,
-  VALIDATOR_REQUIRE
-} from '../../shared/util/validators';
-import { useForm } from '../../shared/hooks/form-hook';
-import { AuthContext } from '../../shared/context/auth-context';
+  VALIDATOR_REQUIRE,
+} from "../../shared/util/validators";
+import { useForm } from "../../shared/hooks/form-hook";
+import { AuthContext } from "../../shared/context/auth-context";
 
-import './Auth.css';
+import "./Auth.css";
 
 const Auth = () => {
   const auth = useContext(AuthContext);
@@ -20,13 +20,13 @@ const Auth = () => {
   const [formState, inputHandler, setFormData] = useForm(
     {
       email: {
-        value: '',
-        isValid: false
+        value: "",
+        isValid: false,
       },
       password: {
-        value: '',
-        isValid: false
-      }
+        value: "",
+        isValid: false,
+      },
     },
     false
   );
@@ -36,7 +36,7 @@ const Auth = () => {
       setFormData(
         {
           ...formState.inputs,
-          name: undefined
+          name: undefined,
         },
         formState.inputs.email.isValid && formState.inputs.password.isValid
       );
@@ -45,19 +45,57 @@ const Auth = () => {
         {
           ...formState.inputs,
           name: {
-            value: '',
-            isValid: false
-          }
+            value: "",
+            isValid: false,
+          },
         },
         false
       );
     }
-    setIsLoginMode(prevMode => !prevMode);
+    setIsLoginMode((prevMode) => !prevMode);
   };
 
-  const authSubmitHandler = event => {
+  const authSubmitHandler = async (event) => {
     event.preventDefault();
-    auth.login();
+
+    if (!isLoginMode) {
+      try {
+        const response = await fetch("http://localhost:5000/api/users/signup", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email: formState.inputs.email.value,
+            password: formState.inputs.password.value,
+            name: formState.inputs.name.value,
+          }),
+        });
+        const responseData = await response.json();
+        console.log("Signup successful:", responseData);
+      } catch (err) {
+        console.error("Signup failed:", err);
+      } 
+    } else {
+      try {
+        const response = await fetch("http://localhost:5000/api/users/login", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email: formState.inputs.email.value,
+            password: formState.inputs.password.value,
+          }),
+        });
+        const responseData = await response.json();
+        console.log("Login successful:", responseData);
+      } catch (err) {
+        console.error("Login failed:", err);
+      }
+    }
+
+    auth.login()
   };
 
   return (
@@ -95,11 +133,11 @@ const Auth = () => {
           onInput={inputHandler}
         />
         <Button type="submit" disabled={!formState.isValid}>
-          {isLoginMode ? 'LOGIN' : 'SIGNUP'}
+          {isLoginMode ? "LOGIN" : "SIGNUP"}
         </Button>
       </form>
       <Button inverse onClick={switchModeHandler}>
-        SWITCH TO {isLoginMode ? 'SIGNUP' : 'LOGIN'}
+        SWITCH TO {isLoginMode ? "SIGNUP" : "LOGIN"}
       </Button>
     </Card>
   );

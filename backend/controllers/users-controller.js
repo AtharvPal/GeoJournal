@@ -25,7 +25,7 @@ const login = async (req, res, next) => {
       new HttpError("Logging in failed, please try again later." + err, 500)
     );
   }
-  if (!identifiedUser || identifiedUser.password !== password) {
+  if (!existingUser || existingUser.password !== password) {
     throw new HttpError("Wrong credentails. Please try again checking", 401);
   }
   res.json({ message: "Logged in!" });

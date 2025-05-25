@@ -17,6 +17,17 @@ const app = express();
 
 app.use(bodyParser.json()); // application/json
 
+app.use((req, res, next) => {
+  /// this is a middleware that will be executed for every request
+  res.setHeader("Access-Control-Allow-Origin", "*"); // allow all origins
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PATCH, DELETE"); // allow these methods
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    "Content-Type, Authorization, Origin, X-Requested-With, Accept"
+  ); // allow these headers
+  next(); // call the next middleware
+});
+
 app.use("/api/places", placesRoutes); /// this enables placeRoutes to be used as middleware
 app.use("/api/users", usersRoutes); /// this enables userRoutes to be used as middleware
 
