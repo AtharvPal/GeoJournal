@@ -34,6 +34,7 @@ const login = async (req, res, next) => {
 const signUp = async (req, res, next) => {
   const errors = validationResult(req); // this will check if the request body is valid
   if (!errors.isEmpty()) {
+    console.log(errors);
     return next(
       new HttpError("Invalid isign in passed, please check your data.", 422)
     ); // this will skip all the other middleware and go to the error handling middleware
@@ -51,7 +52,7 @@ const signUp = async (req, res, next) => {
 
   if (existingUser) {
     return next(
-      new HttpError("User exists already, please login instead.", 422)
+      new HttpError("User exists already, please login instead.", 500)
     ); // this will skip all the other middleware and go to the error handling middleware
   }
 

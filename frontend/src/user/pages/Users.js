@@ -1,16 +1,45 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import UserList from "../components/UserList";
 
-const USERS = [
-  {
-    id: 'u1',
-    name: "Name 1",
-    places: 2,
-    image: "https://hips.hearstapps.com/hmg-prod/images/dahlia-1508785047.jpg?crop=1.00xw:0.669xh;0,0.0136xh&resize=980:*",
-  },
-];
+import ErrorModal from "../../shared/components/UIElement/ErrorModal";
+import LoadingSpinner from "../../shared/components/UIElement/LoadingSpinner";
+
 const Users = () => {
-  return <UserList items={USERS} />;
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState();
+  const [loadedUsers, setLoadedUsers] = useState();
+
+  useEffect(() => {
+    const sendRequest = async () => {
+      setIsLoading(true);
+      try {
+        const response = await fetch("http://localhost:5000/api/users");
+        const responseData = await response.json();
+        if (!response.ok) {
+          throw new Error(responseData.message);
+        }
+        setLoadedUsers(responseData.users);
+        setIsLoading(false);
+      } catch (err) {
+        setError(
+          err.message || "Something went wrong, please try again later."
+        );
+        setIsLoading(false);
+      }
+    };
+    sendRequest();
+  }, []);
+  return (
+    <React.Fragment>
+      <ErrorModal error={error} onClear={() => setError(null)} />
+      {isLoading && (
+        <div className="center">
+          <LoadingSpinner asOverlay />
+        </div>
+      )}
+      {!isLoading && loadedUsers && <UserList items={loadedUsers} />};
+    </React.Fragment>
+  );
 };
 
 export default Users;
