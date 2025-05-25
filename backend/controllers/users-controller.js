@@ -5,7 +5,7 @@ const { validationResult } = require("express-validator"); // this is used to va
 const getUsers = async (req, res, next) => {
   let users;
   try {
-    users = User.find({}, { password: 0 }); // this will find all the users and exclude the password field
+    users = await User.find({}, { password: 0 }); // this will find all the users and exclude the password field
     console.log(users);
   } catch (err) {
     return next(
