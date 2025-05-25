@@ -80,8 +80,9 @@ const UpdatePlace = () => {
           "Content-Type": "application/json",
         }
       );
-    } catch (err) {
       navigate("/" + auth.userId + "/places");
+    } catch (err) {
+      console.error(err);
     }
   };
 
