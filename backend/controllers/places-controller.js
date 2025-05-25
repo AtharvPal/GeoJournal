@@ -1,64 +1,47 @@
 const HttpError = require("../models/http-error");
 const { validationResult } = require("express-validator"); // this is used to validate the request body
-const { v4: uuidv4 } = require("uuid"); // this is a random id generator
+const mongoose = require("mongoose");
 
 const getCoordsForAddress = require("../util/location"); // this is used to get the coordinates of the address
+const Place = require("../models/place"); // this is the mongoose model for the place
+const User = require("../models/user"); // this is the mongoose model for the user
 
-let DUMMY_PLACES = [
-  {
-    id: "p1",
-    title: "Empire State Building",
-    description: "One of the most famous sky scrapers in the world!",
-    imageUrl:
-      "https://upload.wikimedia.org/wikipedia/commons/thumb/d/df/NYC_Empire_State_Building.jpg/640px-NYC_Empire_State_Building.jpg",
-    address: "20 W 34th St, New York, NY 10001",
-    location: {
-      lat: 40.7484405,
-      lng: -73.9878584,
-    },
-    creator: "u1",
-  },
-  {
-    id: "p2",
-    title: "Empire State Building",
-    description: "One of the most famous sky scrapers in the world!",
-    imageUrl:
-      "https://upload.wikimedia.org/wikipedia/commons/thumb/d/df/NYC_Empire_State_Building.jpg/640px-NYC_Empire_State_Building.jpg",
-    address: "20 W 34th St, New York, NY 10001",
-    location: {
-      lat: 40.7484405,
-      lng: -73.9878584,
-    },
-    creator: "u2",
-  },
-];
-
-const getPlaceById = (req, res, next) => {
+const getPlaceById = async (req, res, next) => {
   const placeId = req.params.pid;
-  const place = DUMMY_PLACES.find((p) => {
-    return p.id === placeId;
-  });
-  console.log("GET places");
+  let place;
+  try {
+    place = await Place.findById(placeId);
+  } catch (err) {
+    return next(
+      new HttpError("Something went wrong, could not find a place.", 500)
+    );
+  }
   if (!place) {
     return next(
       new HttpError("Could not find a place for the provided id.", 404)
     ); // this will skip all the other middleware and go to the error handling middleware
   }
-  res.json({ place }); // { place} => { place: place }
+  res.json({ place: place.toObject({ getters: true }) }); // { place} => { place: place }
 };
 
-const getPlacesByUserId = (req, res, next) => {
+const getPlacesByUserId = async (req, res, next) => {
   const userId = req.params.uid;
-  const places = DUMMY_PLACES.filter((p) => {
-    return p.creator === userId;
-  }); 
-  console.log("GET user");
+  let places;
+  try {
+    places = await Place.find({ creator: userId }); // this will find all the places for the userId
+    console.log("places: " + places);
+  } catch (err) {
+    console.log(err);
+    return next(
+      new HttpError("Could not find places for the provided user: ." + err, 404)
+    ); // this will skip all the other middleware and go to the error handling middleware
+  }
   if (!places || places.length === 0) {
     return next(
       new HttpError("Could not find places for the provided user.", 404)
     ); // this will skip all the other middleware and go to the error handling middleware
   }
-  res.json({ places }); // { place} => { place: place }
+  res.json({ places: places.map((p) => p.toObject({ getters: true })) }); // { place} => { place: place }
 };
 
 const createPlace = async (req, res, next) => {
@@ -69,53 +52,121 @@ const createPlace = async (req, res, next) => {
     ); // this will skip all the other middleware and go to the error handling middleware
   }
   const { title, description, address, creator } = req.body; // this is possible because of the body-parser middleware
-  let coordinates;
+  let coordinates = { lat: 0, lng: 0 }; // dummy coordinates
+  // try {
+  //   coordinates = await getCoordsForAddress(address); // this will return the coordinates of the address
+  // } catch (error) {
+  //   return next(new HttpError("Could not convert coords.", 500));
+  // }
+
+  let user;
   try {
-    coordinates = await getCoordsForAddress(address); // this will return the coordinates of the address
+    user = await User.findById(creator);
   } catch (error) {
-    return next(error)
+    return next(error);
   }
-  const createdPlace = {
-    id: uuidv4(),
-    creator,
+
+  if (!user) {
+    return next(
+      new HttpError("Could not find user for the provided id." + err, 404)
+    ); // this will skip all the other middleware and go to the error handling middleware
+  }
+
+  const createdPlace = new Place({
     title,
     description,
     address,
     location: coordinates,
-  };
+    imageUrl:
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/d/df/NYC_Empire_State_Building.jpg/640px-NYC_Empire_State_Building.jpg",
+    creator, // this is the userId of the creator
+  });
 
-  DUMMY_PLACES.push(createdPlace);
-  res.status(201).json({ place: createdPlace });
+  try {
+    const sess = await mongoose.startSession(); // this will start a session for the transaction
+    sess.startTransaction(); // this will start the transaction
+    user.places.push(createdPlace); // this will add the place to the user's places array
+    await user.save({ session: sess }); // this will save the user with the session
+    await createdPlace.save({ session: sess }); // this will save the place with the session
+    await sess.commitTransaction(); // this will commit the transaction
+  } catch (err) {
+    return next(
+      new HttpError("Creating place failed, please try again." + err, 500)
+    );
+  }
+
+  return res.status(201).json({
+    place: createdPlace,
+  }); // this will return the created place
 };
 
-const updatePlace = (req, res, next) => {
+const updatePlace = async (req, res, next) => {
   const errors = validationResult(req); // this will check if the request body is valid
   if (!errors.isEmpty()) {
     return next(
       new HttpError("Invalid inputs passed, please check your data.", 422)
     ); // this will skip all the other middleware and go to the error handling middleware
   }
-  
+
   const { title, description } = req.body;
   const placeId = req.params.pid;
 
-  const updatedPlace = { ...DUMMY_PLACES.find((p) => p.id === placeId) }; // creates a shallow copy of the object
-  const placeIndex = DUMMY_PLACES.findIndex((p) => p.id === placeId);
-  updatedPlace.title = title;
-  updatedPlace.description = description;
-  DUMMY_PLACES[placeIndex] = updatedPlace;
-
-  res.status(200).json({ place: updatedPlace });
-};
-
-const deletePlace = (req, res, next) => {
-  const placeId = req.params.pid;
-  if (!DUMMY_PLACES.find((p) => p.id === placeId)) {
+  let updatedPlace;
+  try {
+    updatedPlace = await Place.findById(placeId);
+  } catch (err) {
+    return next(
+      new HttpError("Something went wrong, could not find a place.", 500)
+    );
+  }
+  if (!updatedPlace) {
     return next(
       new HttpError("Could not find a place for the provided id.", 404)
     ); // this will skip all the other middleware and go to the error handling middleware
   }
-  DUMMY_PLACES = DUMMY_PLACES.filter((p) => p.id !== placeId);
+
+  updatedPlace.title = title;
+  updatedPlace.description = description;
+
+  try {
+    await updatedPlace.save(); // this will save the updated place to the database
+  } catch (err) {
+    return next(new HttpError("Updating place failed, please try again.", 500));
+  }
+
+  res.status(200).json({ place: updatedPlace.toObject({ getters: true }) }); // this will return the updated place
+};
+
+const deletePlace = async (req, res, next) => {
+  const placeId = req.params.pid;
+
+  let place;
+  try {
+    place = await Place.findById(placeId).populate("creator");
+  } catch (err) {
+    return next(
+      new HttpError("Something went wrong, could not find a place.", 500)
+    );
+  }
+  if (!place) {
+    return next(
+      new HttpError("Could not find a place for the provided id.", 404)
+    ); // this will skip all the other middleware and go to the error handling middleware
+  }
+
+  try {
+    const sess = await mongoose.startSession(); // this will start a session for the transaction
+    sess.startTransaction(); // this will start the transaction
+    await place.deleteOne({ session: sess }); // this will remove the place from the database
+    place.creator.places.pull(place); // this will remove the place from the user's places array
+    await place.creator.save({ session: sess }); // this will save the user with the session
+    await sess.commitTransaction(); // this will commit the transaction
+  } catch (err) {
+    return next(
+      new HttpError("Something went wrong, could not delete place." + err, 500)
+    );
+  }
+
   res.status(200).json({ message: "Deleted place." });
 };
 
