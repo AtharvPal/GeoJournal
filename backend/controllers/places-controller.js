@@ -36,11 +36,6 @@ const getPlacesByUserId = async (req, res, next) => {
       new HttpError("Could not find places for the provided user: ." + err, 404)
     ); // this will skip all the other middleware and go to the error handling middleware
   }
-  if (!places || places.length === 0) {
-    return next(
-      new HttpError("Could not find places for the provided user.", 404)
-    ); // this will skip all the other middleware and go to the error handling middleware
-  }
   res.json({ places: places.map((p) => p.toObject({ getters: true })) }); // { place} => { place: place }
 };
 
