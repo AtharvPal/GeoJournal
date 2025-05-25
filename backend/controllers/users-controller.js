@@ -28,7 +28,7 @@ const login = async (req, res, next) => {
   if (!existingUser || existingUser.password !== password) {
     throw new HttpError("Wrong credentails. Please try again checking", 401);
   }
-  res.json({ message: "Logged in!" });
+  res.json({ message: "Logged in!", user: existingUser.toObject({ getters: true }) }); // this will return the user in the response
 };
 
 const signUp = async (req, res, next) => {
