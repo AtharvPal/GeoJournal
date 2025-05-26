@@ -1,4 +1,5 @@
 const HttpError = require("../models/http-error");
+const fs = require("fs"); 
 const { validationResult } = require("express-validator"); // this is used to validate the request body
 const mongoose = require("mongoose");
 
@@ -160,6 +161,12 @@ const deletePlace = async (req, res, next) => {
       new HttpError("Something went wrong, could not delete place." + err, 500)
     );
   }
+
+  fs.unlink(place.imageUrl, (err) => {
+    if (err) {
+      console.error("Error deleting file:", err);
+    }
+  })
 
   res.status(200).json({ message: "Deleted place." });
 };
