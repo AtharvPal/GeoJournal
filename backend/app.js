@@ -1,6 +1,8 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
+const fs = require("fs");
+const path = require("path");
 
 const placesRoutes = require("./routes/places-routes");
 const usersRoutes = require("./routes/users-routes");
@@ -16,6 +18,7 @@ const appName = process.env.MONGODB_APPNAME;
 const app = express();
 
 app.use(bodyParser.json()); // application/json
+app.use('/uploads/images', express.static(path.join('uploads', 'images'))); // this will serve the images from the uploads/images folder
 
 app.use((req, res, next) => {
   /// this is a middleware that will be executed for every request
@@ -37,6 +40,14 @@ app.use((req, res, next) => {
 });
 
 app.use((error, req, res, next) => {
+  if (req.file) {
+    /// if there is a file, delete it
+    fs.unlink(req.file.path, (err) => {
+      if (err) {
+        console.error("Error deleting file:", err);
+      }
+    });
+  }
   /// special error handling middleware
   if (res.headerSent) {
     return next(error);
