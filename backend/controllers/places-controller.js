@@ -48,7 +48,7 @@ const createPlace = async (req, res, next) => {
       new HttpError("Invalid inputs passed, please check your data.", 422)
     ); // this will skip all the other middleware and go to the error handling middleware
   }
-  const { title, description, address, creator } = req.body; // this is possible because of the body-parser middleware
+  const { title, description, address } = req.body; // this is possible because of the body-parser middleware
   let coordinates = { lat: 0, lng: 0 }; // dummy coordinates
   // try {
   //   coordinates = await getCoordsForAddress(address); // this will return the coordinates of the address
@@ -58,7 +58,7 @@ const createPlace = async (req, res, next) => {
 
   let user;
   try {
-    user = await User.findById(creator);
+    user = await User.findById(req.userData.userId);
   } catch (error) {
     return next(error);
   }
@@ -75,7 +75,7 @@ const createPlace = async (req, res, next) => {
     address,
     location: coordinates,
     imageUrl: req.file.path,
-    creator, // this is the userId of the creator
+    creator: req.userData.userId, // this is the userId of the creator
   });
 
   try {
