@@ -78,7 +78,7 @@ const Auth = () => {
         formData.append("image", formState.inputs.image.value);
         const responseData = await sendRequest('http://localhost:5000/api/users/signup', 'POST', formData);
         console.log(responseData);
-        auth.login(responseData.user.id);
+        auth.login(responseData.userId, responseData.token);
 
       } catch (err) {
       }
