@@ -1,11 +1,12 @@
 const HttpError = require("../models/http-error");
-const fs = require("fs"); 
+const fs = require("fs");
 const { validationResult } = require("express-validator"); // this is used to validate the request body
 const mongoose = require("mongoose");
 
 const getCoordsForAddress = require("../util/location"); // this is used to get the coordinates of the address
 const Place = require("../models/place"); // this is the mongoose model for the place
 const User = require("../models/user"); // this is the mongoose model for the user
+const place = require("../models/place");
 
 const getPlaceById = async (req, res, next) => {
   const placeId = req.params.pid;
@@ -120,6 +121,10 @@ const updatePlace = async (req, res, next) => {
     ); // this will skip all the other middleware and go to the error handling middleware
   }
 
+  if (place.creater.toString() !== req.userData.userId) {
+    return next(new HttpError("You are not allowed to edit this place.", 403)); // this will skip all the other middleware and go to the error handling middleware
+  }
+
   updatedPlace.title = title;
   updatedPlace.description = description;
 
@@ -149,6 +154,12 @@ const deletePlace = async (req, res, next) => {
     ); // this will skip all the other middleware and go to the error handling middleware
   }
 
+  if (place.creater.id !== req.userData.userId) {
+    return next(
+      new HttpError("You are not allowed to delete this place.", 403)
+    ); // this will skip all the other middleware and go to the error handling middleware
+  }
+
   try {
     const sess = await mongoose.startSession(); // this will start a session for the transaction
     sess.startTransaction(); // this will start the transaction
@@ -166,7 +177,7 @@ const deletePlace = async (req, res, next) => {
     if (err) {
       console.error("Error deleting file:", err);
     }
-  })
+  });
 
   res.status(200).json({ message: "Deleted place." });
 };
