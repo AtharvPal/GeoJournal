@@ -1,6 +1,12 @@
 const HttpError = require("../models/http-error");
 const User = require("../models/user"); // this is the mongoose model for the user
 const { validationResult } = require("express-validator"); // this is used to validate the request body
+const bcrypt = require("bcrypt"); // this is used to hash the password
+const jwt = require("jsonwebtoken");
+
+require("dotenv").config();
+
+const jwtKey = process.env.JWT_KEY;
 
 const getUsers = async (req, res, next) => {
   let users;
@@ -25,10 +31,39 @@ const login = async (req, res, next) => {
       new HttpError("Logging in failed, please try again later." + err, 500)
     );
   }
-  if (!existingUser || existingUser.password !== password) {
+  if (!existingUser) {
     throw new HttpError("Wrong credentails. Please try again checking", 401);
   }
-  res.json({ message: "Logged in!", user: existingUser.toObject({ getters: true }) }); // this will return the user in the response
+
+  let isValidPassword = false;
+  try {
+    isValidPassword = await bcrypt.compare(password, existingUser.password); // this will compare the password with the hashed password
+  } catch (err) {
+    return next(
+      new HttpError("Could not log you in, please check your credentials.", 500)
+    );
+  }
+
+  if (!isValidPassword) {
+    return next(
+      new HttpError("Wrong credentails. Please try again checking", 401)
+    ); // this will skip all the other middleware and go to the error handling middleware
+  }
+
+  let token;
+  try {
+    token = jwt.sign(
+      { userId: existingUser.id, email: existingUser.email },
+      jwtKey,
+      { expiresIn: "1h" }
+    ); // this will create a token for the user
+  } catch (err) {
+    return next(
+      new HttpError("Logging in failed, please try again later." + err, 500)
+    );
+  }
+
+  res.json({ message: "Logged in!", userId: existingUser.id, email: existingUser.email, token}); // this will return the user in the response
 };
 
 const signUp = async (req, res, next) => {
@@ -56,10 +91,19 @@ const signUp = async (req, res, next) => {
     ); // this will skip all the other middleware and go to the error handling middleware
   }
 
+  let hashedPassword;
+  try {
+    hashedPassword = await bcrypt.hash(password, 12); // this will hash the password
+  } catch (err) {
+    return next(
+      new HttpError("Could not create user, please try again." + err, 500)
+    );
+  }
+
   const createdUser = new User({
     name,
     email,
-    password,
+    password: hashedPassword, // this will save the hashed password to the database
     imageUrl: req.file.path,
     places: [],
   });
@@ -71,7 +115,20 @@ const signUp = async (req, res, next) => {
       new HttpError("Signing up failed, please try again later." + err, 500)
     );
   }
-  res.status(201).json({ user: createdUser.toObject({ getters: true }) }); // this will return the created user
+
+  let token;
+  try {
+    token = jwt.sign(
+      { userId: createdUser.id, email: createdUser.email },
+      jwtKey,
+      { expiresIn: "1h" }
+    ); // this will create a token for the user
+  } catch (err) {
+    return next(
+      new HttpError("Signing up failed, please try again later." + err, 500)
+    );
+  }
+  res.status(201).json({ userId: createdUser.id, email: createdUser.email, token}); // this will return the created user
 };
 
 module.exports = {

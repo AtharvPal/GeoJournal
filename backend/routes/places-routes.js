@@ -9,6 +9,7 @@ const {
   updatePlace,
   deletePlace,
 } = require("../controllers/places-controller");
+const checkAuth = require("../middleware/check-auth");
 
 const router = express.Router();
 
@@ -17,6 +18,8 @@ const router = express.Router();
 router.get("/:pid", getPlaceById);
 
 router.get("/user/:uid", getPlacesByUserId);
+
+router.use(checkAuth);
 
 router.post(
   "/",
