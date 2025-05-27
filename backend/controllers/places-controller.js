@@ -121,7 +121,9 @@ const updatePlace = async (req, res, next) => {
     ); // this will skip all the other middleware and go to the error handling middleware
   }
 
-  if (place.creater.toString() !== req.userData.userId) {
+  console.log("updatedPlace: " + updatedPlace);
+
+  if (updatedPlace.creator.toString() !== req.userData.userId) {
     return next(new HttpError("You are not allowed to edit this place.", 403)); // this will skip all the other middleware and go to the error handling middleware
   }
 
@@ -154,7 +156,7 @@ const deletePlace = async (req, res, next) => {
     ); // this will skip all the other middleware and go to the error handling middleware
   }
 
-  if (place.creater.id !== req.userData.userId) {
+  if (place.creator.id !== req.userData.userId) {
     return next(
       new HttpError("You are not allowed to delete this place.", 403)
     ); // this will skip all the other middleware and go to the error handling middleware
